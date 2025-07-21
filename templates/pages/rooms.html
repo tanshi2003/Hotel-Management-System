@@ -1,0 +1,117 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="clearfix"></div>
+<section>
+    <div class="container pt-5">
+        <h2 class="mr-pc">Rooms</h2>
+        <div class="py-3">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="standard-room-tab" data-toggle="tab" type="button" role="tab"
+                        aria-selected="true">Standard</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="delux-room-tab" data-toggle="tab" type="button" role="tab"
+                        aria-selected="false">Deluxe</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="family-suit-tab" data-toggle="tab" type="button" role="tab"
+                        aria-selected="false">Family Suite</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="business-suit-tab" data-toggle="tab" type="button" role="tab"
+                        aria-selected="false">Business Suite</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="my-3">
+            <div id="rooms" class="row row-cols-1 row-cols-md-3 g-4">
+                {% for room in rooms %}
+                <div class="col">
+                    <div class="card h-100 room-card">
+                        {% if room.style|lower == 'standard' %}
+                        <img src="/static/images/room1.jpg" class="card-img-top" alt="Standard Room">
+                        {% elif room.style|lower == 'delux' %}
+                        <img src="/static/images/room2.jpg" class="card-img-top" alt="Deluxe Room">
+                        {% elif room.style|lower == 'family suit' %}
+                        <img src="/static/images/room3.jpg" class="card-img-top" alt="Family Suite">
+                        {% elif room.style|lower == 'business suit' %}
+                        <img src="/static/images/room4.jpg" class="card-img-top" alt="Business Suite">
+                        {% else %}
+                        <img src="/static/images/room1.jpg" class="card-img-top" alt="Room">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title mr-pc" style="text-transform: uppercase;">{{ room.style }}</h5>
+                            <p class="card-text">Experience comfort and elegance with our exclusive {{ room.style }} room. Perfect for your stay.</p>
+                        </div>
+                        <ul class="list-group list-group-flush border-0">
+                            <li class="list-group-item text-center font-weight-bold mr-pc">₹{{ room.booking_price }}</li>
+                        </ul>
+                        <div class="card-footer bg-transparent text-center">
+                            <small class="text-muted">
+                                <a class="text-center" href="{% url 'room_details' %}?roomNumber={{ room.room_number }}">Details</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    const roomsElm = document.getElementById("rooms");
+
+    const roomImages = {
+        standard: "/static/images/room1.jpg",
+        delux: "/static/images/room2.jpg",
+        family: "/static/images/room3.jpg",
+        business: "/static/images/room4.jpg"
+    };
+
+    const updateRoomsElement = (filteredRooms) => {
+        let innerHtml = "";
+        filteredRooms.forEach((room) => {
+            const roomStyle = room.style.toLowerCase();
+            const imageSrc = roomImages[roomStyle] || "/static/images/room1.jpg";
+
+            innerHtml += `
+            <div class="col">
+                <div class="card h-100 room-card">
+                    <img src="${imageSrc}" class="card-img-top" alt="${room.style} Room">
+                    <div class="card-body">
+                        <h5 class="card-title mr-pc" style="text-transform: uppercase;">${room.style}</h5>
+                        <p class="card-text">Experience comfort and elegance with our exclusive ${room.style} room. Perfect for your stay.</p>
+                    </div>
+                    <ul class="list-group list-group-flush border-0">
+                        <li class="list-group-item text-center font-weight-bold mr-pc">₹${room.booking_price}</li>
+                    </ul>
+                    <div class="card-footer bg-transparent text-center">
+                        <small class="text-muted">
+                            <a class="text-center" href="{% url 'room_details' %}?roomNumber=${room.room_number}">Details</a>
+                        </small>
+                    </div>
+                </div>
+            </div>`;
+        });
+        roomsElm.innerHTML = innerHtml;
+    }
+
+    async function fetchFilteredRooms(roomType) {
+        const url = `http://127.0.0.1:8000/hms/rooms/${roomType}`;
+        const res = await fetch(url);
+        const resData = await res.json();
+        updateRoomsElement(resData.filtered_rooms);
+    }
+
+    document.getElementById("standard-room-tab").addEventListener("click", () => fetchFilteredRooms("standard"));
+    document.getElementById("delux-room-tab").addEventListener("click", () => fetchFilteredRooms("delux"));
+    document.getElementById("family-suit-tab").addEventListener("click", () => fetchFilteredRooms("family"));
+    document.getElementById("business-suit-tab").addEventListener("click", () => fetchFilteredRooms("business"));
+</script>
+{% endblock javascript %}

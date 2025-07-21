@@ -1,0 +1,52 @@
+{% extends 'common/base.html' %}
+{% block content %}
+<main>
+    <section>
+        <div class="container pt-5">
+            <h2 class="text-center">Please <span class="mr-pc">Log in</span> to the system</h2>
+            <div class="row">
+                <div class="col col-md-6 mx-auto p-1 p-md-5 user-login-form">
+                    <form action="{% url 'user_profile:login' %}" method="post">
+                        {% csrf_token %}
+                        {% if error_msg %}
+                        <div class="alert alert-danger" role="alert">
+                            {{error_msg}}
+                        </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col col-md-8">
+                                <div class="form-group">
+                                    <label for="id_{{person_form.email.name}}">Email address</label>
+                                    <input required type="email" name="{{person_form.email.name}}"
+                                        class="form-control border-info" id="id_{{person_form.email.name}}"
+                                        aria-describedby="emailHelp" {% if person_form.email.value%}
+                                        value="{{person_form.email.value}}" {%endif%} placeholder="Enter email">
+                                    {{person_form.email.errors}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col col-md-8">
+                                <div class="form-group">
+                                    <label for="id_{{account_form.password.name}}">Password</label>
+                                    <input required name="{{account_form.password.name}}" type="password"
+                                        class="form-control border-info" id="id_{{account_form.password.name}}" {% if
+                                        account_from.password.value %} value="{{account_form.password.value}}" {%
+                                        endif%} placeholder="Password">
+                                    {{account_form.password.errors}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col d-flex justify-content-center mt-md-3">
+                                <button type="submit" class="btn mr-bgpc text-white px-md-5">Login</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</main>
+{% endblock content %}

@@ -1,0 +1,94 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<main class="container my-5">
+    <h2 class="text-center"><span class="mr-pc font-weight-bold">Profile</span> Summary</h2>
+    <hr class="hr-bar mt-n2 rounded">
+    <div class="row">
+        {% if error_msg %}
+        <div class="col-7">
+            <div class="alert alert-danger" role="alert">
+                {{error_msg}}
+            </div>
+        </div>
+        {% endif %}
+        <div class="col-7 col-md-6 mx-auto p-2 p-md-5 user-login-form">
+
+            <form method="post" action="{% url 'user_profile:profile' %}">
+                {%csrf_token%}
+                <div class="form-group">
+                    <label for="id_{{person_form.name.name}}">Name</label>
+                    <input required type="text" class="form-control border-info" id="id_{{person_form.name.name}}"
+                        name="{{person_form.name.name}}" value="{{person_form.name.value}}">
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{person_form.email.name}}">Email address</label>
+                    <input required name="email" id="id_{{person_form.email.name}}" type="email" class="form-control border-info"
+                        value="{{person_form.email.value}}">
+                    {% if person_form.email.errors %}
+                    <small id="emailHelp" class="form-text text-muted">
+                        {{person_form.email.errors}}
+                    </small>
+                    {% endif %}
+                    <!--  -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{person_form.phone.name}}">Phone Number</label>
+                    <input required name="phone" id="id_{{person_form.phone.name}}" type="tel" class="form-control border-info"
+                        value="{{person_form.phone.value}}">
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{person_form.account_type.name}}">Account Type</label>
+                    <input required readonly name="account_type" id="id_{{person_form.account_type.name}}" type="text"
+                        class="form-control border-info" value="{{person_form.account_type.value}}">
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{address_form.city.name}}">City</label>
+                    <input required name="{{address_form.city.name}}" id="id_{{address_form.city.name}}" type="text"
+                        class="form-control border-info" {% if address_form.city.value %} value="{{address_form.city.value}}"
+                        {%endif%}>
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{address_form.country.name}}">Country</label>
+                    <input required name="{{address_form.country.name}}" id="id_country" type="text"
+                        class="form-control border-info" {% if address_form.city.value %} value="{{address_form.country.value}}"
+                        {%endif%}>
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+                <div class="form-group">
+                    <label for="id_{{address_form.zip_code.name}}">Zip Code</label>
+                    <input required name="{{address_form.zip_code.name}}" id="id_{{address_form.zip_code.name}}"
+                        type="text" class="form-control border-info" {% if address_form.city.value %}
+                        value="{{address_form.zip_code.value}}" {%endif%}>
+                    <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                        else.</small> -->
+                </div>
+
+                <!-- <div class="form-group">
+                    <label for="id_password">Password</label>
+                    <input readonly type="password" name="password" class="form-control" id="id_password" value="{{person.password}}">
+                </div> -->
+
+                <div class="row">
+                    <div class="col d-flex justify-content-center mt-md-3">
+                        <button type="submit" class="btn mr-bgpc text-white px-md-5">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</main>
+{% endblock content %}
+
+{% block javascript %}
+{% endblock javascript %}

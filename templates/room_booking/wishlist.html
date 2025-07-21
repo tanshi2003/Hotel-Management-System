@@ -1,0 +1,138 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <h3 class="text-center"><span class="mr-pc font-weight-bold">Wish</span> List</h3>
+    <hr class="hr-bar mt-n2 rounded">
+    <div class="d-flex justify-content-center row">
+        <div class="col-md-8 col-md-10 mx-auto p-1 p-md-5 user-login-form">
+            <div>
+                {% for item in items %}
+                <form action="{% url 'delete_wishlist_item' item.pk %}" method="post">
+                    {% csrf_token %}
+                    <div
+                        class="d-flex flex-row justify-content-between align-items-center p-2 bg-white mt-4 px-3 rounded">
+                        <div class="mr-1 d-flex align-items-center justify-content-between p-1">
+                            <input class="form-check-input" type="checkbox" value="{{item.id}}"
+                                id="defaultCheck{{item.id}}">
+                            <img class="rounded" src="https://htmldemo.net/oestin/oestin/img/room/l-1.jpg" width="70">
+                        </div>
+                        <div class="d-flex flex-column align-items-center product-details">
+                            <span class="font-weight-bold">{{item}}</span>
+                            <div class="d-flex flex-row product-desc">
+                                <div class="size mr-1"><span class="text-grey">Room Style:</span><span
+                                        class="font-weight-bold">&nbsp;{{item.room.style}}</span></div>
+                                <div class="color"><span class="text-grey">Room price:</span><span
+                                        class="font-weight-bold">&nbsp;{{item.room.booking_price}}</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="text-grey">$ <span id="item-total-price-{{item.id}}">{{item.total_price}}</span>
+                            </h5>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button type="submit" class="border-0 bg-transparent">
+                                <i class="fa fa-trash mb-1 text-danger"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                {% endfor %}
+            </div>
+
+            <div class="row-col-1 mt-3 p-2">
+                <div class="col d-flex justify-content-end ">
+                    <p class="h5 font-italic">
+                        Total Amount: <span id="total-amount">{{total_amount}}</span>
+                    </p>
+                </div>
+            </div>
+            <div>
+            </div>
+            <div class="d-flex flex-row align-items-center mt-3 p-2 bg-white rounded"><input type="text"
+                    class="form-control border-0 gift-card" placeholder="discount code/gift card"><button
+                    class="btn btn-sm mr-bgpc text-white ml-2" type="button">Apply</button></div>
+            <div class="row-col-1 mt-3 p-2">
+                <div class="col d-flex ">
+                    <p class="h5 font-weight-bold">
+                        <span class="mr-pc">Total Amount</span> <small>($)</small>: <span
+                            id="total-amount-ds">{{total_amount}}</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="d-flex flex-row align-items-center mt-3 p-2 bg-white rounded">
+                <button id="book-now" class="btn btn-warning btn-block btn-lg ml-2 pay-button" type="button">Proceed to
+                    Pay</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    const csrfToken = document.cookie.split('=')[1]
+    const totalAmountElm = document.getElementById('total-amount');
+    const checkBoxes = document.getElementsByTagName('input');
+    const totalAmountDAElm = document.getElementById('total-amount-ds');
+    const bookNowElm = document.getElementById('book-now');
+    let totalAmount = 0
+    for (const element of checkBoxes) {
+        if (element.type == 'checkbox') {
+            const id = parseInt(element.value)
+            element.addEventListener('change', (e) => {
+                const itemTotalPrice = parseFloat(document.getElementById(`item-total-price-${id}`).innerText)
+                if (e.target.checked) {
+                    totalAmount += itemTotalPrice;
+                } else {
+                    totalAmount -= itemTotalPrice;
+                }
+                totalAmountElm.innerText = totalAmount;
+                totalAmountDAElm.innerText = totalAmount;
+
+            })
+        }
+    }
+    totalAmountElm.innerText = totalAmount;
+    totalAmountDAElm.innerText = totalAmount;
+
+    const bookNow = async () => {
+        let data = {
+            "itemId": []
+        }
+        for (const element of checkBoxes) {
+            if (element.type == 'checkbox') {
+                const id = parseInt(element.value)
+                data.itemId.push(id)
+            }
+        }
+        if (data.itemId.length == 0) {
+            alert("No item seleted!!")
+            return;
+        }
+        const url = `http://127.0.0.1:8000/hms/room-booking/book-now/`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+
+        })
+        const decoded_res = await res.json()
+        if (decoded_res.msg) {
+            alert(decoded_res.msg)
+            location.reload()
+        }
+        else {
+            alert("Order placing failed!!")
+        }
+    }
+
+    bookNowElm.addEventListener('click', bookNow);
+
+</script>
+{% endblock javascript %}

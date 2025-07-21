@@ -1,0 +1,81 @@
+
+a{
+     text-decoration: none;
+}
+.mr-pc{
+     color: #296c70!important;
+}
+.mr-bgpc{
+     background-color: #296c70!important;
+}
+
+.navbar-shadow{
+     box-shadow: rgba(0, 162, 183, 0.1) 0px 12px 10px -10px;
+}
+.hr-bar{
+     width: 250px;
+     color: #00a2b7;
+     border: 2px solid #00a2b7;
+}
+.custom-search-box {
+     width: 900px;
+     background: white;
+     box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
+
+
+.custom-box-shadow {
+     box-shadow: rgba(0, 162, 183, 0.16) 0px 1px 4px;
+}
+
+.user-reviews {
+     height: 400px;
+     border-radius: 5px;
+     box-shadow: rgba(0, 162, 183, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+}
+
+.user-review-photo {
+     width: 200px;
+     height: 200px;
+}
+
+.common-questions{
+     border: .5px solid #00a2b78b !important;
+     /* border-color: #00a2b7; */
+}
+
+.subscribe-section{
+     height: 350px;
+     color: white;
+}
+.subscribe-section input{
+     color: white;
+     border: .5px solid #296c70 !important;
+}
+.subscribe-section input:focus{
+     border: .5px solid #296c70 !important;
+}
+
+.room-card{
+     box-shadow: rgba(0, 162, 183, 0.16) 0px 1px 4px;
+     border: none;
+}
+
+
+/* Room details style */
+
+#room-details #inputGroup-sizing-default{
+     background-color: #296c706a;
+}
+
+#contact-container #basic-addon1{
+     background-color: #296c706a;
+}
+
+.user-login-form{
+     box-shadow: rgba(0, 162, 183, 0.16) 0px 1px 4px;
+}
+
+.user-registration-form{
+     box-shadow: rgba(0, 162, 183, 0.16) 0px 1px 4px;
+}

@@ -1,0 +1,288 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<main>
+   <div class="container">
+      <section class="py-3">
+         <div class="banner-section">
+            <div class="row">
+               <div class="col-lg-6 col-md-12">
+                  <h1 class="mr-pc">Welcome to <span class="font-weight-bolder">Rama Krishna Hotel</span> </h1>
+                  <h4>Find your <span class="mr-pc">HOME COMFORTNESS</span></h4>
+                  <p class="pb-md-3">There are many variations of passages of Lorem Ipsum available, but the majority
+                     have
+                     suffered
+                     alteration in some form, by injected humour, or randomised words which don't look even
+                     slightly
+                     believable
+                  </p>
+                  {{search_form.room_type.option.value}}
+                  <!-- Searc box code start here..... -->
+                  <div class="custom-search-box my-md-5">
+                     <form action="{% url 'search' %}" method="get">
+                        {% csrf_token %}
+                        <div class="row p-3">
+                           <div class="col-4">
+                              <div class="input-group mb-3">
+                                 <div class="input-group-prepend">
+                                    <span class="input-group-text" id="basic-addon1">Check In</span>
+                                 </div>
+                                 <input id="checkin-date" name="check_in" type="date" class="form-control"
+                                    placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                              </div>
+                           </div>
+                           <div class="col-4">
+                              <div class="input-group mb-3">
+                                 <div class="input-group-prepend">
+                                    <span class="input-group-text" id="basic-addon1">Check Out</span>
+                                 </div>
+                                 <input id="checkout-date" name="check_out" type="date" class="form-control"
+                                    placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                              </div>
+                           </div>
+                           <div class="col-3">
+                              <div class="input-group mb-3">
+
+                                 <div class="input-group-prepend">
+                                    <label class="input-group-text" id="basic-addon1" for="inputGroupSelect01">Room
+                                       Type</label>
+                                 </div>
+                                 {{search_form.room_type}}
+                                 <!-- <select class="custom-select" >
+                                       <option selected>Choose...</option>
+                                       <option value="1">One</option>
+                                       <option value="2">Two</option>
+                                       <option value="3">Three</option>
+                                     </select> -->
+                              </div>
+                           </div>
+                           <div class="col-1 ">
+                              <button type="submit" id="search-button" class="btn btn-warning"><i
+                                    class="fa-solid fa-magnifying-glass"></i></button>
+                           </div>
+                        </div>
+                     </form>
+
+                  </div>
+                  <!-- Searc box code ends here..... -->
+
+               </div>
+               <div class="col-lg-6 col-md-12" style="z-index: -1;">
+                  <div>
+                     <img src="https://picsum.photos/id/122/1080/720" class="img-fluid banner-image"
+                        alt="Responsive image">
+                  </div>
+               </div>
+            </div>
+         </div>
+
+
+
+      </section>
+
+      <!-- why we are section start here -->
+      <section class="my-3 py-5">
+         <h2 class="text-center"><span class="mr-pc font-weight-bold">WHY</span> WE ARE?</h2>
+         <hr class="hr-bar mt-n2 rounded">
+
+         <div class="row mt-5">
+            <div class="col custom-box-shadow m-2 p-2">
+               <div class="text-center h1 mr-pc"><i class="fa-solid fa-heart-circle-check"></i></div>
+               <h3 class="text-center">Easy Booking</h3>
+               <p class="text-center">Easily book your prefered room from our website.</p>
+            </div>
+            <div class="col custom-box-shadow m-2 p-2">
+               <div class="text-center h1 mr-pc"><i class="fa-regular fa-rectangle-xmark"></i></i></div>
+               <h3 class="text-center">Hassel Free Cancelation</h3>
+               <p class="text-center">Easily canecle your booking from our website.</p>
+            </div>
+            <div class="col custom-box-shadow m-2 p-2">
+               <div class="text-center h1 mr-pc"><i class="fa-solid fa-star"></i></div>
+               <h3 class="text-center">High Rated</h3>
+               <p class="text-center">We are one of the high rated hotel in this community.</p>
+            </div>
+            <div class="col custom-box-shadow m-2 p-2">
+               <div class="text-center h1 mr-pc"><i class="fa-solid fa-headset"></i></div>
+               <h3 class="text-center">24/7 Support</h3>
+               <p class="text-center">We have 24/7 support to hear you.</p>
+            </div>
+         </div>
+
+      </section>
+
+      <!-- What people says section starts here -->
+      <section class="my-3 py-5">
+         <div class="pb-5">
+            <h2 class="text-center"><span class="mr-pc font-weight-bold">WHAT</span> PEOPLE SAYS</h2>
+            <hr class="hr-bar mt-n2 rounded">
+         </div>
+         <div class="my-5">
+            <div id="carouselExampleControls" class="carousel slide user-reviews d-flex align-items-center"
+               data-ride="carousel">
+               <div class="carousel-inner">
+                  <div class="carousel-item active">
+                     <div class="row justify-content-around">
+                        <div class="col-4 d-flex align-items-center justify-content-center">
+                           <div class="user-review-photo">
+                              <img class="w-100 h-100 rounded-circle"
+                                 src="https://images.unsplash.com/photo-1542596768-5d1d21f1cf98?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1374&q=80"
+                                 alt="...">
+                           </div>
+                        </div>
+                        <div class="col-7 d-flex align-items-center">
+                           <p>The room. And also the stuff were amazing and friendly. They offered me a whole suit which
+                              was exceeded my expectations. The room was spacious, you can play cricket 😂 I will
+                              definitely recommend this hotel.</p>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="carousel-item ">
+                     <div class="row justify-content-around">
+                        <div class="col-4 d-flex align-items-center justify-content-center">
+                           <div class="user-review-photo">
+                              <img class="w-100 h-100 rounded-circle"
+                                 src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&q=80"
+                                 alt="...">
+                           </div>
+                        </div>
+                        <div class="col-7 d-flex align-items-center">
+                           <p>The room are spacious and clean. The restaurant staffs and security guard are very
+                              friendly, Everyone was super welcoming, helpful & friendly, Specially thanks to Mr. Masud.
+                              I definitely recommend this for anyone going to Dhaka.
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="carousel-item ">
+                     <div class="row justify-content-around">
+                        <div class="col-4 d-flex align-items-center justify-content-center">
+                           <div class="user-review-photo">
+                              <img class="w-100 h-100 rounded-circle"
+                                 src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                                 alt="...">
+                           </div>
+                        </div>
+                        <div class="col-7 d-flex align-items-center">
+                           <p>Thanks to everyone there, very good stay for the price, I recommend this hotel for any
+                              visitors.</p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <button class="carousel-control-prev text-dark" type="button" data-target="#carouselExampleControls"
+                  data-slide="prev">
+                  <!-- <span class="carousel-control-prev-icon" aria-hidden="true"></span> -->
+                  <i class="fa-solid fa-arrow-left mr-pc"></i>
+                  <span class="sr-only">Previous</span>
+               </button>
+               <button class="carousel-control-next text-dark" type="button" data-target="#carouselExampleControls"
+                  data-slide="next">
+                  <!-- <span class="carousel-control-next-icon text-dark" aria-hidden="true"></span> -->
+                  <i class="fa-solid fa-arrow-right mr-pc"></i>
+                  <span class="sr-only">Next</span>
+               </button>
+            </div>
+         </div>
+      </section>
+      <!-- What people says section ends here -->
+
+
+      <!-- common questions sections start here -->
+      <section class="my-lg-5 my-md-3 my-2 py-lg-5 py-md-3 py-2">
+         <div class="text-center mb-5 pb-5">
+            <h2><span class="mr-pc font-weight-bold">COMMON</span> QUESTIONS</h2>
+            <hr class="hr-bar mt-n2 rounded">
+         </div>
+         <div>
+            <div class="accordion border-0" id="accordionExample">
+               <div class="card my-3 rounded common-questions ">
+                  <div class="card-header bg-transparent" id="headingOne">
+                     <h4 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true"
+                        aria-controls="collapseOne" role="button">
+                        What is the time to count a day?
+                     </h4>
+                  </div>
+
+                  <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+                     <div class="card-body">
+                        The 12.00 pm to next day 12.00 pm is count as one day.
+                     </div>
+                  </div>
+               </div>
+               <div class="card my-3 common-questions rounded">
+                  <div class="card-header bg-transparent" id="headingTow">
+                     <h4 class="mb-0" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+                        aria-controls="collapseTwo" role="button">
+                        Do you have smooking zone?
+                     </h4>
+                  </div>
+
+                  <div id="collapseTwo" class="collapse" aria-labelledby="headingTow" data-parent="#accordionExample">
+                     <div class="card-body">
+                        Yes, we have smooking zone.
+                     </div>
+                  </div>
+               </div>
+               <div class="card my-3 common-questions rounded">
+                  <div class="card-header bg-transparent" id="headingThree">
+                     <h4 class="mb-0" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true"
+                        aria-controls="collapseThree" role="button">
+                        Do you offer pool service?
+                     </h4>
+                  </div>
+
+                  <div id="collapseThree" class="collapse" aria-labelledby="headingThree"
+                     data-parent="#accordionExample">
+                     <div class="card-body">
+                        No, we don't offer pool service.
+                     </div>
+                  </div>
+               </div>
+               <div class="card my-3 common-questions rounded">
+                  <div class="card-header bg-transparent" id="headingFour">
+                     <h4 class="mb-0" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true"
+                        aria-controls="collapseFour" role="button">
+                        Do I get full refund if I cancel?
+                     </h4>
+                  </div>
+
+                  <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordionExample">
+                     <div class="card-body">
+                        Conditionally you will get full refund if you cancel before confirmation. If you cancel during
+                        the check in date you will get 50% refund.
+                     </div>
+                  </div>
+               </div>
+
+            </div>
+         </div>
+      </section>
+      <!-- common questions sections ends here -->
+
+   </div>
+
+</main>
+<section class="container py-lg-5 py-md-3 py-2 bg-info rounded subscribe-section">
+   <div class="d-flex flex-column align-items-center">
+      <div class="p-lg-5 p-md-3 p-2">
+         <h5>
+            To know latest offer, discount and news subscribe by submitting your email addres
+         </h5>
+      </div>
+      <div class="p-lg-5 p-md-3 p-2">
+         <input class="rounded p-1 bg-transparent" type="email" placeholder="Enter your email address">
+         <button class="btn mr-bgpc text-white" type="submit">SUBSCRIBE</button>
+      </div>
+   </div>
+</section>
+{% endblock content%}
+
+{% block javascript %}
+<script>
+   // Add bootstrap class for styling the choice input filed in search
+   const elm = document.getElementById("id_room_type");
+   elm.classList.add('custom-select')
+
+</script>
+
+{% endblock javascript %}

@@ -1,0 +1,53 @@
+{% extends 'common/base.html' %}
+{% block content %}
+<main>
+    <section>
+        <div class="container pt-5">
+            <h2 class="text-center">Please <span class="mr-pc">create</span> an account</h2>
+            <div class="row">
+                <div class="col col-md-6 mx-auto p-2 p-md-5 user-registration-form">
+                    <form action="{% url 'user_profile:registration' %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_{{person_form.name.name}}">Name</label>
+                            <input required type="text" name="{{person_form.name.name}}" class="form-control border-info"
+                                id="id_{{person_form.name.name}}" {% if person_form.name.value%}
+                                value="{{person_form.name.value}}" {%endif%} placeholder="Enter name">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_{{person_form.email.name}}">Email address</label>
+                            <input required type="email" name="{{person_form.email.name}}" class="form-control border-info"
+                                id="id_{{person_form.email.name}}" aria-describedby="emailHelp" 
+                                {% if person_form.email.value%} value="{{person_form.email.value}}" {%endif%}
+                                placeholder="Enter email">
+                            {% if person_form.email.errors %}
+                            <div class="alert alert-danger mt-2" role="alert">
+                                {{person_form.email.errors}}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_{{account_form.password.name}}">Password</label>
+                            <input required name="{{account_form.password.name}}" type="password" class="form-control border-info"
+                                id="id_{{account_form.password.name}}" {% if account_from.password.value %}
+                                value="{{account_form.password.value}}" {% endif %} placeholder="Password">
+                                {% if account_form.password.errors %}
+                                <div class="alert alert-danger mt-2" role="alert">
+                                    {{account_form.password.errors}}
+                                </div>
+                                {% endif %}
+                            
+                        </div>
+
+                        <div class="row">
+                            <div class="col d-flex justify-content-center mt-md-3">
+                                <button type="submit" class="btn mr-bgpc text-white px-md-5">Register</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}
