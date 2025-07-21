@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-3q*2-htly(ueewu=a^-5&*4c^^-)0oe5futujfhxae4!dnmv=g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -141,3 +141,4 @@ AUTH_USER_MODEL = 'user_profile.Account'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = '/hms/user/login/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
