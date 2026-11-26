@@ -2,19 +2,11 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 
-from room_booking.models import Booking, WishList, BookingHistory
+from room_booking.models import Booking, WishList, BookingHistory\nfrom room_booking.lifecycle import transitions_for_role, can_transition
 
 
 # Keep Django admin edits aligned with the staff booking lifecycle endpoint.
-ADMIN_TRANSITIONS = {
-    'requested': {'pending', 'confirmed', 'canceled', 'abandoned'},
-    'pending': {'confirmed', 'canceled', 'abandoned'},
-    'confirmed': {'checked-in', 'canceled', 'abandoned'},
-    'checked-in': {'checked-out'},
-    'checked-out': set(),
-    'canceled': set(),
-    'abandoned': set(),
-}
+ADMIN_TRANSITIONS = transitions_for_role('admin')
 
 
 class BookingAdminForm(forms.ModelForm):
@@ -29,7 +21,7 @@ class BookingAdminForm(forms.ModelForm):
                 raise ValidationError('New bookings must start in requested status.')
             return target
         current = Booking.objects.get(pk=self.instance.pk).booking_status
-        if target != current and target not in ADMIN_TRANSITIONS.get(current, set()):
+        if target != current and not can_transition(current, target, 'admin'):
             raise ValidationError(f'Invalid booking status transition: {current} → {target}.')
         return target
 
