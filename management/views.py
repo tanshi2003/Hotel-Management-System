@@ -11,19 +11,6 @@ from django.core.exceptions import ValidationError
 from room_booking.models import Booking
 from room_booking.lifecycle import allowed_targets, transition_booking
 
-RECEPTION_TRANSITIONS = {
-    'requested': {'pending', 'confirmed', 'canceled'},
-    'pending': {'confirmed', 'canceled'},
-    'confirmed': {'checked-in', 'canceled'},
-    'checked-in': {'checked-out'},
-}
-PRIVILEGED_TRANSITIONS = {
-    **RECEPTION_TRANSITIONS,
-    'requested': {'pending', 'confirmed', 'canceled', 'abandoned'},
-    'pending': {'confirmed', 'canceled', 'abandoned'},
-    'confirmed': {'checked-in', 'canceled', 'abandoned'},
-}
-
 
 class ManagementAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
@@ -43,8 +30,7 @@ class ManagementView(ManagementAccessMixin, View):
             'rooms', 'bookinghistory_set__room'
         ).order_by('-pk')
         counts = {status: 0 for status, _ in Booking.BOOKING_STATUS}
-        aggregated = Booking.objects.values('booking_status').annotate(total=Count('pk'))
-        for status, count in aggregated.values_list('booking_status', 'total'):
+        for status, count in Booking.objects.values('booking_status').annotate(total=Count('pk')).values_list('booking_status', 'total'):
             counts[status] = count
         role = 'admin' if request.user.is_admin else 'manager' if request.user.is_manager else 'receptionist'
         transition_options = {status: sorted(allowed_targets(status, role)) for status, _ in Booking.BOOKING_STATUS}
@@ -77,20 +63,15 @@ class BookingStatusTransitionView(ManagementAccessMixin, View):
         if not isinstance(target, str):
             return JsonResponse({'error': 'A target status is required.'}, status=400)
 
-        is_privileged = request.user.is_admin or request.user.is_manager
-        allowed_map = PRIVILEGED_TRANSITIONS if is_privileged else RECEPTION_TRANSITIONS
+        role = 'admin' if request.user.is_admin else 'manager' if request.user.is_manager else 'receptionist'
         with transaction.atomic():
             booking = get_object_or_404(
                 Booking.objects.select_for_update(),
                 reservation_number=kwargs['reservation_number'],
             )
             current = booking.booking_status
-            if target not in allowed_map.get(current, set()):
-                return JsonResponse({
-                    'error': 'This booking status transition is not allowed.',
-                    'current_status': current,
-                    'target_status': target,
-                }, status=409)
-            booking.booking_status = target
-            booking.save(update_fields=['booking_status'])
+            try:
+                transition_booking(booking, target, role)
+            except ValidationError as error:
+                return JsonResponse({'error': str(error), 'current_status': current, 'target_status': target}, status=409)
         return JsonResponse({'reservationNumber': booking.reservation_number, 'status': booking.booking_status})
