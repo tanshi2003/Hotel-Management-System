@@ -37,10 +37,13 @@ class RegisterView(View):
         account_form = AccountForm(request.POST)
         if person_form.is_valid() and account_form.is_valid():
             print('form is valid')
-            person = person_form.save()
+            person = person_form.save(commit=False)
+            person.account_type = 'guest'
+            person.save()
             # self.person_role[person.account_type] = True
             account = Account(
                 email=person.email,
+                is_guest=True,
                 # is_admin = self.person_role['admin'],
                 # is_manager = self.person_role['manager'],
                 # is_receptionist = self.person_role['receptionist'],
