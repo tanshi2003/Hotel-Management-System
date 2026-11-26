@@ -38,6 +38,7 @@ class RegisterView(View):
         account_form = AccountForm(request.POST)
         if person_form.is_valid() and account_form.is_valid():
             person = person_form.save(commit=False)
+            person.email = person.email.strip().lower()
             person.account_type = 'guest'
             account = Account(
                 email=person.email,
@@ -94,7 +95,7 @@ class LoginView(View):
     def post(self, request, *args, **kwargs):
 
         account_form = AccountForm(request.POST)
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password', '')
         user = authenticate(request, username=email, password=password) if email and password else None
         if user is not None:
