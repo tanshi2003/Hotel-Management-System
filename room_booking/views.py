@@ -153,7 +153,6 @@ class AddBookingView(LoginRequiredMixin, View):
 
 class GuestCancelBookingView(LoginRequiredMixin, View):
     """Guests may cancel only their own booking before check-in."""
-    CANCELLABLE = {'requested', 'pending', 'confirmed'}
 
     def post(self, request, *args, **kwargs):
         person = get_object_or_404(Person, email=request.user.email)
@@ -163,8 +162,8 @@ class GuestCancelBookingView(LoginRequiredMixin, View):
                 reservation_number=kwargs['reservation_number'],
                 person=person,
             )
-            if booking.booking_status not in self.CANCELLABLE:
+            try:
+                transition_booking(booking, 'canceled', 'guest')
+            except ValidationError:
                 return JsonResponse({'error': 'This booking can no longer be cancelled.'}, status=409)
-            booking.booking_status = 'canceled'
-            booking.save(update_fields=['booking_status'])
         return JsonResponse({'reservationNumber': booking.reservation_number, 'status': 'canceled'})
