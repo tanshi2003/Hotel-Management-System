@@ -35,13 +35,20 @@ class AddToWishListView(LoginRequiredMixin, View):
             if not room_number:
                 return JsonResponse({'msg': 'Room number is required.'}, status=400)
             person = get_object_or_404(Person, email=request.user.email)
-            room = get_object_or_404(Room, room_number=room_number)
             active_statuses = ('requested', 'pending', 'confirmed', 'checked-in')
-            conflict = BookingHistory.objects.filter(room=room, check_in__lt=checkout, check_out__gt=checkin, reservation_number__booking_status__in=active_statuses).exists()
-            if conflict:
-                return JsonResponse({'msg': 'This room is already booked for those dates.'}, status=409)
-            total_price = calculate_stay_price(room, checkin, checkout, cleaning, laundry, breakfast)
-            wishlist = WishList.objects.create(person=person, room=room, check_in=checkin, check_out=checkout, room_cleaning=cleaning, laundry=laundry, breakfast=breakfast, total_price=total_price)
+            # Serialize wishlist availability checks with booking creation by locking
+            # the room row. This closes the check-then-create race on databases
+            # that support SELECT FOR UPDATE (e.g. PostgreSQL/MySQL).
+            with transaction.atomic():
+                room = get_object_or_404(Room.objects.select_for_update(), room_number=room_number)
+                conflict = BookingHistory.objects.filter(
+                    room=room, check_in__lt=checkout, check_out__gt=checkin,
+                    reservation_number__booking_status__in=active_statuses
+                ).exists()
+                if conflict:
+                    return JsonResponse({'msg': 'This room is already booked for those dates.'}, status=409)
+                total_price = calculate_stay_price(room, checkin, checkout, cleaning, laundry, breakfast)
+                wishlist = WishList.objects.create(person=person, room=room, check_in=checkin, check_out=checkout, room_cleaning=cleaning, laundry=laundry, breakfast=breakfast, total_price=total_price)
             return JsonResponse({'msg': 'Added to wish list.', 'itemId': wishlist.pk, 'totalPrice': total_price})
         except (ValueError, TypeError, json.JSONDecodeError):
             return JsonResponse({'msg': 'Invalid request data.'}, status=400)
