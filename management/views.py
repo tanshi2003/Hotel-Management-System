@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Count\nfrom django.core.exceptions import ValidationError
 
-from room_booking.models import Booking
+from room_booking.models import Booking\nfrom room_booking.lifecycle import allowed_targets, transition_booking
 
 RECEPTION_TRANSITIONS = {
     'requested': {'pending', 'confirmed', 'canceled'},
@@ -44,7 +44,7 @@ class ManagementView(ManagementAccessMixin, View):
         aggregated = Booking.objects.values('booking_status').annotate(total=Count('pk'))
         for status, count in aggregated.values_list('booking_status', 'total'):
             counts[status] = count
-        context = {
+        role = 'admin' if request.user.is_admin else 'manager' if request.user.is_manager else 'receptionist'\n        transition_options = {status: sorted(allowed_targets(status, role)) for status, _ in Booking.BOOKING_STATUS}\n        context = {
             'title': 'Management',
             'active_nav_item': 'nav-management',
             'bookings': bookings,
