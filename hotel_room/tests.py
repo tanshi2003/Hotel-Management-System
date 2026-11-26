@@ -1,3 +1,6 @@
+import json
+from datetime import date
+
 from django.test import TestCase
 
 # Create your tests here.
@@ -28,7 +31,7 @@ class RoomAvailabilityLifecycleTests(TestCase):
     def availability(self, payload):
         return self.client.post(
             '/hms/rooms/details/availability',
-            data=__import__('json').dumps(payload),
+            data=json.dumps(payload),
             content_type='application/json',
         )
 
@@ -59,4 +62,12 @@ class RoomAvailabilityLifecycleTests(TestCase):
         response = self.availability({
             'roomNumber': 'A101', 'checkInDate': 20261211, 'checkOutDate': '2026-12-13',
         })
+        self.assertEqual(response.status_code, 400)
+
+    def test_json_array_payload_returns_400(self):
+        response = self.client.post(
+            '/hms/rooms/details/availability',
+            data=json.dumps(['not', 'an', 'object']),
+            content_type='application/json',
+        )
         self.assertEqual(response.status_code, 400)
