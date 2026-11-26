@@ -104,3 +104,18 @@ class BookingCreationConsistencyTests(TestCase):
                 response = self.book(bad_ids)
                 self.assertEqual(response.status_code, 400)
         self.assertEqual(Booking.objects.count(), 0)
+    def test_existing_active_booking_conflict_returns_409_and_preserves_wishlist(self):
+        from room_booking.models import Booking, BookingHistory
+        existing = Booking.objects.create(
+            reservation_number='R-EXISTING-001', person=self.person, booking_status='confirmed',
+        )
+        BookingHistory.objects.create(
+            reservation_number=existing, room=self.room1, person=self.person,
+            check_in=date(2026, 12, 10), check_out=date(2026, 12, 12), total_price=200,
+        )
+        item = self.add_wishlist(self.room1)
+        response = self.book([item.pk])
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(Booking.objects.count(), 1)
+        self.assertEqual(BookingHistory.objects.count(), 1)
+        self.assertTrue(self.wishlist_model.objects.filter(pk=item.pk).exists())
