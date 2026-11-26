@@ -46,3 +46,61 @@ class BookingLifecyclePolicyTests(TestCase):
         with self.assertRaises(ValidationError):
             transition_booking(booking, 'abandoned', 'receptionist')
         booking.save.assert_not_called()
+
+class BookingCreationConsistencyTests(TestCase):
+    def setUp(self):
+        from user_profile.models import Person, Account
+        from hotel_room.models import Hotel, Room
+        from room_booking.models import WishList
+        self.hotel = Hotel.objects.create(name='Booking Test Hotel')
+        self.room1 = Room.objects.create(hotel=self.hotel, room_number='B201', style='standard', booking_price=100)
+        self.room2 = Room.objects.create(hotel=self.hotel, room_number='B202', style='delux', booking_price=150)
+        self.person = Person.objects.create(name='Booking Guest', email='booking@example.com', phone='1234567890', account_type='guest')
+        self.user = Account.objects.create_user(email='booking@example.com', password='test-password', person=self.person, is_guest=True)
+        self.client.force_login(self.user)
+        self.wishlist_model = WishList
+        self.booking_endpoint = '/hms/room-booking/book-now/'
+
+    def add_wishlist(self, room, checkin=date(2026, 12, 10), checkout=date(2026, 12, 12), cleaning=False):
+        return self.wishlist_model.objects.create(
+            person=self.person, room=room, check_in=checkin, check_out=checkout,
+            room_cleaning=cleaning, total_price=99999,
+        )
+
+    def book(self, ids):
+        import json
+        return self.client.post(self.booking_endpoint, data=json.dumps({'itemId': ids}), content_type='application/json')
+
+    def test_overlapping_wishlist_items_for_same_room_rejected_without_partial_writes(self):
+        from room_booking.models import Booking, BookingHistory
+        first = self.add_wishlist(self.room1)
+        second = self.add_wishlist(self.room1, date(2026, 12, 11), date(2026, 12, 13))
+        response = self.book([first.pk, second.pk])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Booking.objects.count(), 0)
+        self.assertEqual(BookingHistory.objects.count(), 0)
+        self.assertEqual(self.wishlist_model.objects.filter(person=self.person).count(), 2)
+
+    def test_successful_booking_creates_consistent_booking_history_and_recalculates_prices(self):
+        from room_booking.models import Booking, BookingHistory
+        first = self.add_wishlist(self.room1, cleaning=True)
+        second = self.add_wishlist(self.room2)
+        response = self.book([str(first.pk), second.pk])
+        self.assertEqual(response.status_code, 201)
+        booking = Booking.objects.get(reservation_number=response.json()['reservationNumber'])
+        self.assertEqual(booking.booking_status, 'requested')
+        self.assertSetEqual(set(booking.rooms.values_list('pk', flat=True)), {self.room1.pk, self.room2.pk})
+        histories = list(BookingHistory.objects.filter(reservation_number=booking).order_by('room_id'))
+        self.assertEqual(len(histories), 2)
+        self.assertEqual({history.room_id for history in histories}, {self.room1.pk, self.room2.pk})
+        self.assertTrue(all(history.person_id == self.person.pk for history in histories))
+        self.assertEqual({history.total_price for history in histories}, {205, 300})
+        self.assertFalse(self.wishlist_model.objects.filter(person=self.person).exists())
+
+    def test_invalid_wishlist_ids_are_rejected_without_creating_booking(self):
+        from room_booking.models import Booking
+        for bad_ids in ([True], [1.5], [-1], ['not-an-id']):
+            with self.subTest(bad_ids=bad_ids):
+                response = self.book(bad_ids)
+                self.assertEqual(response.status_code, 400)
+        self.assertEqual(Booking.objects.count(), 0)
