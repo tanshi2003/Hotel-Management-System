@@ -33,7 +33,7 @@
       <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Total reservations</small><strong>{{ total_bookings }}</strong></div></div>
       <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Requested</small><strong>{{ status_counts.requested|default:0 }}</strong></div></div>
       <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Confirmed</small><strong>{{ status_counts.confirmed|default:0 }}</strong></div></div>
-      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>In house</small><strong>{{ status_counts.checked-in|default:0 }}</strong></div></div>
+      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>In house</small><strong>{{ in_house_count }}</strong></div></div>
     </div>
     <div class="management-filters">
       <div class="form-row align-items-end">
