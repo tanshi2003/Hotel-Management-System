@@ -76,9 +76,17 @@ def check_room_availability(req):
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({'error': 'Invalid JSON request.'}, status=400)
 
-    checkin_date = parse_date(data.get('checkInDate', ''))
-    checkout_date = parse_date(data.get('checkOutDate', ''))
+    raw_checkin = data.get('checkInDate')
+    raw_checkout = data.get('checkOutDate')
     room_number = data.get('roomNumber')
+
+    # parse_date expects strings. Reject malformed types instead of letting
+    # unexpected payload shapes raise a server error.
+    if not isinstance(raw_checkin, str) or not isinstance(raw_checkout, str) or not isinstance(room_number, (str, int)):
+        return JsonResponse({'error': 'Provide a room number and valid check-in/check-out dates.'}, status=400)
+
+    checkin_date = parse_date(raw_checkin)
+    checkout_date = parse_date(raw_checkout)
 
     if not checkin_date or not checkout_date or checkout_date <= checkin_date or not room_number:
         return JsonResponse({'error': 'Provide a room number and valid check-in/check-out dates.'}, status=400)
