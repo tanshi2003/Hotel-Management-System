@@ -157,9 +157,9 @@
     const checkOutElm = document.getElementById("checkOut");
     const checkButtonElm = document.getElementById("checkButton");
 
-    const url = `http://127.0.0.1:8000/hms/rooms/details/availability`;
+    const url = "{% url 'room_availability' %}";
     console.log('I am here', typeof document.cookie)
-    const csrfToken = document.cookie.split('=')[1]
+    const csrfToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('csrftoken='))?.split('=')[1] || '';
     console.log(csrfToken)
     checkButtonElm.addEventListener('click', async () => {
         const checkInDate = checkInElm.value;
@@ -215,7 +215,7 @@
             "checkOutDate": checkOutElm.value,
             "roomNumber": "{{room_details.room_number}}"
         }
-        const url2 = `http://127.0.0.1:8000/hms/room-booking/add-to-wishlist/`;
+        const url2 = "{% url 'add_to_wishlist' %}";
         const res = await fetch(url2, {
             method: 'POST',
             headers: {
