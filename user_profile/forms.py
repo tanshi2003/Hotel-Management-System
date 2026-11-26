@@ -28,7 +28,7 @@ class PersonForm2(forms.ModelForm):
     # password = forms.CharField(max_length=12, widget=forms.PasswordInput())
     class Meta:
         model = Person
-        fields = "__all__"
+        fields = ["name", "email", "phone"]
 
 
 class AccountForm(forms.ModelForm):
