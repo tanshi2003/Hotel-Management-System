@@ -23,7 +23,8 @@
 .management-action select{max-width:160px}
 @media(max-width:576px){.management-shell{padding-top:12px}.management-heading h1{font-size:1.8rem}}
 </style>
-<main class="management-shell">\n  <form id="csrfHolder" style="display:none">{% csrf_token %}</form>
+<main class="management-shell">
+  <form id="csrfHolder" style="display:none">{% csrf_token %}</form>
   <div class="container">
     <div class="management-heading">
       <div><h1>Reservations desk</h1><p class="management-subtitle">Search, review and move bookings through their lifecycle.</p></div>
@@ -90,7 +91,8 @@
 <script>
 (function(){
   const privileged = {{ is_privileged|yesno:"true,false" }};
-  const transitions = JSON.parse(document.getElementById('transitionOptions').textContent);\n  const labels = {requested:'Requested',pending:'Pending',confirmed:'Confirmed','checked-in':'Checked-in','checked-out':'Checked-out',canceled:'Canceled',abandoned:'Abandoned'};
+  const transitions = JSON.parse(document.getElementById('transitionOptions').textContent);
+  const labels = {requested:'Requested',pending:'Pending',confirmed:'Confirmed','checked-in':'Checked-in','checked-out':'Checked-out',canceled:'Canceled',abandoned:'Abandoned'};
   const rows = [...document.querySelectorAll('.booking-row')];
   const search = document.getElementById('reservationSearch'), status = document.getElementById('statusFilter'), from = document.getElementById('dateFrom'), to = document.getElementById('dateTo');
   function fillStatusSelect(select, current){
