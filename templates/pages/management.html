@@ -89,15 +89,11 @@
 <script>
 (function(){
   const privileged = {{ is_privileged|yesno:"true,false" }};
-  const transitions = {
-    reception: {requested:['pending','confirmed','canceled'],pending:['confirmed','canceled'],confirmed:['checked-in','canceled'],'checked-in':['checked-out']},
-    privileged: {requested:['pending','confirmed','canceled','abandoned'],pending:['confirmed','canceled','abandoned'],confirmed:['checked-in','canceled','abandoned'],'checked-in':['checked-out']}
-  };
-  const labels = {requested:'Requested',pending:'Pending',confirmed:'Confirmed','checked-in':'Checked-in','checked-out':'Checked-out',canceled:'Canceled',abandoned:'Abandoned'};
+  const transitions = JSON.parse(document.getElementById('transitionOptions').textContent);\n  const labels = {requested:'Requested',pending:'Pending',confirmed:'Confirmed','checked-in':'Checked-in','checked-out':'Checked-out',canceled:'Canceled',abandoned:'Abandoned'};
   const rows = [...document.querySelectorAll('.booking-row')];
   const search = document.getElementById('reservationSearch'), status = document.getElementById('statusFilter'), from = document.getElementById('dateFrom'), to = document.getElementById('dateTo');
   function fillStatusSelect(select, current){
-    const allowed = (privileged ? transitions.privileged : transitions.reception)[current] || [];
+    const allowed = transitions[current] || [];
     select.innerHTML = '<option value="">Update status...</option>' + allowed.map(s=>'<option value="'+s+'">'+labels[s]+'</option>').join('');
     select.disabled = allowed.length === 0;
   }
