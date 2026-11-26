@@ -76,6 +76,9 @@ def check_room_availability(req):
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({'error': 'Invalid JSON request.'}, status=400)
 
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Invalid JSON request.'}, status=400)
+
     raw_checkin = data.get('checkInDate')
     raw_checkout = data.get('checkOutDate')
     room_number = data.get('roomNumber')
