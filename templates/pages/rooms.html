@@ -35,9 +35,9 @@
                         <img src="/static/images/room1.jpg" class="card-img-top" alt="Standard Room">
                         {% elif room.style|lower == 'delux' %}
                         <img src="/static/images/room2.jpg" class="card-img-top" alt="Deluxe Room">
-                        {% elif room.style|lower == 'family suit' %}
+                        {% elif room.style|lower == 'family' %}
                         <img src="/static/images/room3.jpg" class="card-img-top" alt="Family Suite">
-                        {% elif room.style|lower == 'business suit' %}
+                        {% elif room.style|lower == 'business' %}
                         <img src="/static/images/room4.jpg" class="card-img-top" alt="Business Suite">
                         {% else %}
                         <img src="/static/images/room1.jpg" class="card-img-top" alt="Room">
@@ -103,7 +103,8 @@
     }
 
     async function fetchFilteredRooms(roomType) {
-        const url = `http://127.0.0.1:8000/hms/rooms/${roomType}`;
+        const endpoints = { standard: "{% url 'standard_rooms' %}", delux: "{% url 'delux_rooms' %}", family: "{% url 'family_suit' %}", business: "{% url 'business_suit' %}" };
+        const url = endpoints[roomType];
         const res = await fetch(url);
         const resData = await res.json();
         updateRoomsElement(resData.filtered_rooms);
