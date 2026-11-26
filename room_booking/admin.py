@@ -6,10 +6,6 @@ from room_booking.models import Booking, WishList, BookingHistory
 from room_booking.lifecycle import transitions_for_role, can_transition
 
 
-# Keep Django admin edits aligned with the staff booking lifecycle endpoint.
-ADMIN_TRANSITIONS = transitions_for_role('admin')
-
-
 class BookingAdminForm(forms.ModelForm):
     class Meta:
         model = Booking
