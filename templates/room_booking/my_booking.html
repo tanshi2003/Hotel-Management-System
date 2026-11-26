@@ -6,38 +6,44 @@
     <hr class="hr-bar mt-n2 rounded">
     <div class="row">
         <div class="col col-md-11 mx-auto p-1 p-md-5 user-login-form">
-            <div class="row-col-1">
-                {% for booking in bookings %}
-                <div class="col my-2 py-2">
-                    <div class="row">
-                        <div class="col">{{booking.reservation_number}}</div>
-                        <div class="col">
-                            <p>{{booking.room.room_number}}</p>
-                        </div>
-                        <div class="col"><span class="small border border-info rounded p-1">{{booking.booking_status}}</span></div>
-                        <div class="col">
-                            {% if booking.room_cleaning %}
-                            <span class="text-warning border rounded border-info p-1 mt-2">Room Cleaning</span>
-                            {%endif%}
-                            {% if booking.laundry %}
-                            <span class="text-warning border rounded border-info p-1 mt-2">Laundry</span>
-                            {% endif %}
-                            {% if booking.breakfast %}
-                            <span class="text-warning border rounded border-info p-1 mt-2">Breakfast</span>
-                            {%endif%}
+            {% for booking in bookings %}
+            <div class="card my-3">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <strong>Reservation #{{ booking.reservation_number }}</strong>
+                        <span class="small border border-info rounded p-1">{{ booking.booking_status|title }}</span>
+                    </div>
+                    {% for history in booking.bookinghistory_set.all %}
+                    <div class="border-top py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <strong>Room {{ history.room.room_number|default:"Room removed" }}</strong>
+                                {% if history.room %}<div class="small text-muted">{{ history.room.get_style_display }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <div><strong>Check-in:</strong> {{ history.check_in|date:"M d, Y" }}</div>
+                                <div><strong>Check-out:</strong> {{ history.check_out|date:"M d, Y" }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                {% if history.room_cleaning %}<span class="badge badge-info mr-1 mb-1">Room Cleaning</span>{% endif %}
+                                {% if history.laundry %}<span class="badge badge-info mr-1 mb-1">Laundry</span>{% endif %}
+                                {% if history.breakfast %}<span class="badge badge-info mr-1 mb-1">Breakfast</span>{% endif %}
+                                <div class="mt-2"><strong>Total: ${{ history.total_price }}</strong></div>
+                            </div>
                         </div>
                     </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No room details are attached to this reservation yet.</p>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <p>You don't have any bookings yet.</p>
+                <a class="btn btn-outline-primary" href="{% url 'rooms' %}">Explore rooms</a>
+            </div>
+            {% endfor %}
         </div>
     </div>
-
 </div>
 {% endblock content %}
-
-{% block javascript %}
-<script>
-
-</script>
-{% endblock javascript %}
