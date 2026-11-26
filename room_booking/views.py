@@ -86,28 +86,56 @@ class AddBookingView(LoginRequiredMixin, View):
             selected_ids = list(dict.fromkeys(int(item_id) for item_id in raw_ids))
         except (ValueError, TypeError, json.JSONDecodeError):
             return JsonResponse({'msg': 'Invalid wishlist selection.'}, status=400)
+
         person = get_object_or_404(Person, email=request.user.email)
-        items = list(WishList.objects.filter(pk__in=selected_ids, person=person).select_related('room'))
-        if len(items) != len(selected_ids):
-            return JsonResponse({'msg': 'One or more selected wishlist items are invalid.'}, status=400)
         active_statuses = ('requested', 'pending', 'confirmed', 'checked-in')
-        for index, item in enumerate(items):
-            if not item.check_in or not item.check_out or item.check_out <= item.check_in:
-                return JsonResponse({'msg': 'A selected item has invalid booking dates.'}, status=400)
-            # Prevent overlapping duplicate room selections in the same checkout request.
-            for other in items[index + 1:]:
-                if item.room_id == other.room_id and item.check_in < other.check_out and item.check_out > other.check_in:
-                    return JsonResponse({'msg': 'Selected wishlist items overlap for the same room.'}, status=400)
-            conflict = BookingHistory.objects.filter(room=item.room, check_in__lt=item.check_out, check_out__gt=item.check_in, reservation_number__booking_status__in=active_statuses).exists()
-            if conflict:
-                return JsonResponse({'msg': f'Room {item.room.room_number} is no longer available for those dates.'}, status=409)
-        # Ignore client-submitted prices and recompute all totals from database room rates.
-        for item in items:
-            item.total_price = calculate_stay_price(item.room, item.check_in, item.check_out, item.room_cleaning, item.laundry, item.breakfast)
+
+        # Keep availability checks and booking writes in one transaction. Lock room rows
+        # in a stable order so simultaneous requests for the same room serialize.
         with transaction.atomic():
-            booking = Booking.objects.create(person=person, booking_status='requested', reservation_number=f'R-{uuid4().hex[:16]}')
+            items = list(WishList.objects.filter(pk__in=selected_ids, person=person).select_related('room'))
+            if len(items) != len(selected_ids):
+                return JsonResponse({'msg': 'One or more selected wishlist items are invalid.'}, status=400)
+
+            room_ids = sorted({item.room_id for item in items if item.room_id is not None})
+            locked_rooms = list(Room.objects.select_for_update().filter(pk__in=room_ids).order_by('room_number'))
+            if len(locked_rooms) != len(room_ids):
+                return JsonResponse({'msg': 'One or more selected rooms no longer exist.'}, status=400)
+
+            for index, item in enumerate(items):
+                if not item.check_in or not item.check_out or item.check_out <= item.check_in:
+                    return JsonResponse({'msg': 'A selected item has invalid booking dates.'}, status=400)
+                for other in items[index + 1:]:
+                    if item.room_id == other.room_id and item.check_in < other.check_out and item.check_out > other.check_in:
+                        return JsonResponse({'msg': 'Selected wishlist items overlap for the same room.'}, status=400)
+                conflict = BookingHistory.objects.filter(
+                    room=item.room,
+                    check_in__lt=item.check_out,
+                    check_out__gt=item.check_in,
+                    reservation_number__booking_status__in=active_statuses,
+                ).exists()
+                if conflict:
+                    return JsonResponse({'msg': f'Room {item.room.room_number} is no longer available for those dates.'}, status=409)
+
+            # Ignore client-submitted prices and recompute totals from database room rates.
+            for item in items:
+                item.total_price = calculate_stay_price(
+                    item.room, item.check_in, item.check_out,
+                    item.room_cleaning, item.laundry, item.breakfast
+                )
+
+            booking = Booking.objects.create(
+                person=person, booking_status='requested',
+                reservation_number=f'R-{uuid4().hex[:16]}'
+            )
             for item in items:
                 booking.rooms.add(item.room)
-                BookingHistory.objects.create(reservation_number=booking, room=item.room, person=person, check_in=item.check_in, check_out=item.check_out, room_cleaning=item.room_cleaning, laundry=item.laundry, breakfast=item.breakfast, total_price=item.total_price)
+                BookingHistory.objects.create(
+                    reservation_number=booking, room=item.room, person=person,
+                    check_in=item.check_in, check_out=item.check_out,
+                    room_cleaning=item.room_cleaning, laundry=item.laundry,
+                    breakfast=item.breakfast, total_price=item.total_price
+                )
             WishList.objects.filter(pk__in=selected_ids, person=person).delete()
+
         return JsonResponse({'msg': 'Your reservation request has been placed!', 'reservationNumber': booking.reservation_number}, status=201)
