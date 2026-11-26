@@ -108,3 +108,27 @@ class GuestCancellationTests(TestCase):
         self.booking.save(update_fields=['booking_status'])
         self.client.force_login(self.guest)
         self.assertEqual(self.cancel().status_code, 409)
+
+
+class ManagementDashboardTests(TestCase):
+    def setUp(self):
+        from user_profile.models import Person
+        from room_booking.models import Booking, BookingHistory
+        from hotel_room.models import Hotel, Room
+        self.person = Person.objects.create(name='Dashboard Guest', email='dash@example.com', phone='9876543210', account_type='guest')
+        self.staff = Account.objects.create_user(email='dash-staff@example.com', password='pw', is_receptionist=True)
+        self.booking = Booking.objects.create(person=self.person, reservation_number='R-DASHBOARD-1', booking_status='confirmed')
+        hotel = Hotel.objects.create(name='Dashboard Hotel')
+        room = Room.objects.create(hotel=hotel, room_number='D-101', style='standard', booking_price=5000)
+        self.booking.rooms.add(room)
+        BookingHistory.objects.create(reservation_number=self.booking, room=room, person=self.person, check_in='2026-12-01', check_out='2026-12-03', total_price=10000)
+
+    def test_dashboard_renders_reservation_guest_room_and_filters(self):
+        self.client.force_login(self.staff)
+        response = self.client.get('/hms/management/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'R-DASHBOARD-1')
+        self.assertContains(response, 'Dashboard Guest')
+        self.assertContains(response, 'D-101')
+        self.assertContains(response, 'Check-in from')
+        self.assertContains(response, 'Update booking status')
