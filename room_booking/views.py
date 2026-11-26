@@ -111,5 +111,3 @@ class AddBookingView(LoginRequiredMixin, View):
                 BookingHistory.objects.create(reservation_number=booking, room=item.room, person=person, check_in=item.check_in, check_out=item.check_out, room_cleaning=item.room_cleaning, laundry=item.laundry, breakfast=item.breakfast, total_price=item.total_price)
             WishList.objects.filter(pk__in=selected_ids, person=person).delete()
         return JsonResponse({'msg': 'Your reservation request has been placed!', 'reservationNumber': booking.reservation_number}, status=201)
-
-from room_booking.models import BookingHistory
