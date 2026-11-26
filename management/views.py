@@ -5,9 +5,11 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
-from django.db.models import Count\nfrom django.core.exceptions import ValidationError
+from django.db.models import Count
+from django.core.exceptions import ValidationError
 
-from room_booking.models import Booking\nfrom room_booking.lifecycle import allowed_targets, transition_booking
+from room_booking.models import Booking
+from room_booking.lifecycle import allowed_targets, transition_booking
 
 RECEPTION_TRANSITIONS = {
     'requested': {'pending', 'confirmed', 'canceled'},
@@ -44,7 +46,9 @@ class ManagementView(ManagementAccessMixin, View):
         aggregated = Booking.objects.values('booking_status').annotate(total=Count('pk'))
         for status, count in aggregated.values_list('booking_status', 'total'):
             counts[status] = count
-        role = 'admin' if request.user.is_admin else 'manager' if request.user.is_manager else 'receptionist'\n        transition_options = {status: sorted(allowed_targets(status, role)) for status, _ in Booking.BOOKING_STATUS}\n        context = {
+        role = 'admin' if request.user.is_admin else 'manager' if request.user.is_manager else 'receptionist'
+        transition_options = {status: sorted(allowed_targets(status, role)) for status, _ in Booking.BOOKING_STATUS}
+        context = {
             'title': 'Management',
             'active_nav_item': 'nav-management',
             'bookings': bookings,
@@ -52,7 +56,8 @@ class ManagementView(ManagementAccessMixin, View):
             'in_house_count': counts.get('checked-in', 0),
             'total_bookings': bookings.count(),
             'is_privileged': request.user.is_admin or request.user.is_manager,
-            'status_labels': dict(Booking.BOOKING_STATUS),\n            'transition_options': transition_options,
+            'status_labels': dict(Booking.BOOKING_STATUS),
+            'transition_options': transition_options,
         }
         return render(request=request, template_name=self.template_name, context=context)
 
