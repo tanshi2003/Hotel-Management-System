@@ -119,3 +119,12 @@ class BookingCreationConsistencyTests(TestCase):
         self.assertEqual(Booking.objects.count(), 1)
         self.assertEqual(BookingHistory.objects.count(), 1)
         self.assertTrue(self.wishlist_model.objects.filter(pk=item.pk).exists())
+    def test_non_object_booking_payload_returns_400(self):
+        import json
+        from room_booking.models import Booking
+        response = self.client.post(
+            self.booking_endpoint, data=json.dumps(['not', 'an', 'object']),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Booking.objects.count(), 0)
