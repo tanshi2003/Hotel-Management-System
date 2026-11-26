@@ -39,7 +39,7 @@ class LoginNormalizationTests(TestCase):
             name='Login Guest', email='login-guest@example.com',
             phone='1234567890', account_type='guest',
         )
-        Account.objects.create_user(
+        self.account = Account.objects.create_user(
             email='login-guest@example.com', password='test-login-password',
             is_guest=True, person=self.person,
         )
@@ -51,6 +51,7 @@ class LoginNormalizationTests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/')
+        self.assertEqual(self.client.session['_auth_user_id'], str(self.account.pk))
 
     def test_user_manager_normalizes_email(self):
         account = Account.objects.create_user(
