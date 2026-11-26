@@ -5,9 +5,9 @@ from django.http import JsonResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date\nfrom django.core.exceptions import ValidationError
 
-from room_booking.models import WishList, Booking, BookingHistory
+from room_booking.models import WishList, Booking, BookingHistory\nfrom room_booking.lifecycle import transition_booking
 from user_profile.models import Person
 from hotel_room.models import Room
 
