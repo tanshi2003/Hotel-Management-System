@@ -89,6 +89,8 @@ class AddBookingView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body or '{}')
+            if not isinstance(data, dict):
+                return JsonResponse({'msg': 'Invalid wishlist selection.'}, status=400)
             raw_ids = data.get('itemId', [])
             if not isinstance(raw_ids, list) or not raw_ids:
                 return JsonResponse({'msg': 'Please select at least one wishlist item.'}, status=400)
