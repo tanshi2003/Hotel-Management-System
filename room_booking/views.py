@@ -92,7 +92,16 @@ class AddBookingView(LoginRequiredMixin, View):
             raw_ids = data.get('itemId', [])
             if not isinstance(raw_ids, list) or not raw_ids:
                 return JsonResponse({'msg': 'Please select at least one wishlist item.'}, status=400)
-            selected_ids = list(dict.fromkeys(int(item_id) for item_id in raw_ids))
+            if any(
+                isinstance(item_id, bool)
+                or not (isinstance(item_id, int) or (isinstance(item_id, str) and item_id.isdecimal()))
+                for item_id in raw_ids
+            ):
+                return JsonResponse({'msg': 'Wishlist IDs must be positive integers.'}, status=400)
+            parsed_ids = [int(item_id) for item_id in raw_ids]
+            if any(item_id <= 0 for item_id in parsed_ids):
+                return JsonResponse({'msg': 'Wishlist IDs must be positive integers.'}, status=400)
+            selected_ids = list(dict.fromkeys(parsed_ids))
         except (ValueError, TypeError, json.JSONDecodeError):
             return JsonResponse({'msg': 'Invalid wishlist selection.'}, status=400)
 
