@@ -1,9 +1,46 @@
+from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 
 from room_booking.models import Booking, WishList, BookingHistory
 
 
-# Register your models here.
-admin.site.register(Booking)
+# Keep Django admin edits aligned with the staff booking lifecycle endpoint.
+ADMIN_TRANSITIONS = {
+    'requested': {'pending', 'confirmed', 'canceled', 'abandoned'},
+    'pending': {'confirmed', 'canceled', 'abandoned'},
+    'confirmed': {'checked-in', 'canceled', 'abandoned'},
+    'checked-in': {'checked-out'},
+    'checked-out': set(),
+    'canceled': set(),
+    'abandoned': set(),
+}
+
+
+class BookingAdminForm(forms.ModelForm):
+    class Meta:
+        model = Booking
+        fields = '__all__'
+
+    def clean_booking_status(self):
+        target = self.cleaned_data['booking_status']
+        if not self.instance.pk:
+            if target != 'requested':
+                raise ValidationError('New bookings must start in requested status.')
+            return target
+        current = Booking.objects.get(pk=self.instance.pk).booking_status
+        if target != current and target not in ADMIN_TRANSITIONS.get(current, set()):
+            raise ValidationError(f'Invalid booking status transition: {current} → {target}.')
+        return target
+
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    form = BookingAdminForm
+    list_display = ('reservation_number', 'person', 'booking_status')
+    list_filter = ('booking_status',)
+    search_fields = ('reservation_number', 'person__name', 'person__email')
+
+
 admin.site.register(WishList)
 admin.site.register(BookingHistory)
