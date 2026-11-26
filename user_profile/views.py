@@ -110,8 +110,8 @@ class LoginView(View):
 class LogoutView(View):
     __homepage_url_name = 'home'
 
-    def get(self, request, *args, **kwargs):
-        """ Loged out the user """
+    def post(self, request, *args, **kwargs):
+        """Log the user out via a CSRF-protected POST."""
         logout(request)
         return redirect(self.__homepage_url_name)
 
