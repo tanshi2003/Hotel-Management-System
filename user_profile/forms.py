@@ -25,7 +25,9 @@ class PersonForm(forms.ModelForm):
         fields = ['name', 'email', 'phone']
 
 class PersonForm2(forms.ModelForm):
-    # password = forms.CharField(max_length=12, widget=forms.PasswordInput())
+    # Keep account email stable until a proper email-change flow updates both models.
+    email = forms.EmailField(disabled=True)
+
     class Meta:
         model = Person
         fields = ["name", "email", "phone"]
