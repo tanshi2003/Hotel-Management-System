@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count\nfrom django.core.exceptions import ValidationError
 
 from room_booking.models import Booking
 
