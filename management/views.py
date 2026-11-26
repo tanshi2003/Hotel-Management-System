@@ -52,7 +52,7 @@ class ManagementView(ManagementAccessMixin, View):
             'in_house_count': counts.get('checked-in', 0),
             'total_bookings': bookings.count(),
             'is_privileged': request.user.is_admin or request.user.is_manager,
-            'status_labels': dict(Booking.BOOKING_STATUS),
+            'status_labels': dict(Booking.BOOKING_STATUS),\n            'transition_options': transition_options,
         }
         return render(request=request, template_name=self.template_name, context=context)
 
