@@ -9,5 +9,6 @@ urlpatterns = [
     path('wishlist/<int:id>', views.DeleteWishListItemView.as_view(), name='delete_wishlist_item'),
     path('my-bookings', views.BookingListView.as_view(), name='my_bookings'),
     path('book-now/', views.AddBookingView.as_view(), name='book_now'),
+    path('booking/<str:reservation_number>/cancel/', views.GuestCancelBookingView.as_view(), name='guest_cancel_booking'),
 
 ]
