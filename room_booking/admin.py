@@ -2,7 +2,8 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 
-from room_booking.models import Booking, WishList, BookingHistory\nfrom room_booking.lifecycle import transitions_for_role, can_transition
+from room_booking.models import Booking, WishList, BookingHistory
+from room_booking.lifecycle import transitions_for_role, can_transition
 
 
 # Keep Django admin edits aligned with the staff booking lifecycle endpoint.
