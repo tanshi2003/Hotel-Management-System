@@ -88,9 +88,9 @@ class LoginView(View):
     def post(self, request, *args, **kwargs):
 
         account_form = AccountForm(request.POST)
-        email = request.POST['email']
-        password = request.POST['password']
-        user = authenticate(request, username=email, password=password)
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        user = authenticate(request, username=email, password=password) if email and password else None
         if user is not None:
             login(request, user)
             return redirect(self.__homepage_url_name)
