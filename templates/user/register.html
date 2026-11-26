@@ -27,6 +27,12 @@
                             {% endif %}
                         </div>
                         <div class="form-group">
+                            <label for="id_phone">Phone number</label>
+                            <input required type="tel" name="phone" class="form-control border-info" id="id_phone"
+                                value="{{ person_form.phone.value|default:'' }}" placeholder="Enter phone number">
+                            {% if person_form.phone.errors %}<div class="alert alert-danger mt-2">{{ person_form.phone.errors }}</div>{% endif %}
+                        </div>
+                        <div class="form-group">
                             <label for="id_{{account_form.password.name}}">Password</label>
                             <input required name="{{account_form.password.name}}" type="password" class="form-control border-info"
                                 id="id_{{account_form.password.name}}" {% if account_from.password.value %}
