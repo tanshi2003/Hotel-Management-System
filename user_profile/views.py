@@ -155,18 +155,25 @@ class ProfileView(LoginRequiredMixin, View):
         
 
         if person_form.is_valid() and address_form.is_valid():
-            if is_empty_address:
-                address = Address(
-                    city=address_form.cleaned_data['city'],
-                    country=address_form.cleaned_data['country'],
-                    zip_code=address_form.cleaned_data['zip_code'],
-                    person=person,
-                )
-                person_form.save()
-                address.save()
-            else:
-                person_form.save()
-                address_form.save()
+            try:
+                # Profile and address are one logical update: never persist only one half.
+                with transaction.atomic():
+                    person_form.save()
+                    if is_empty_address:
+                        address = address_form.save(commit=False)
+                        address.person = person
+                        address.save()
+                    else:
+                        address_form.save()
+            except IntegrityError:
+                context = {
+                    'title': 'User Profile',
+                    'active_nav_item': 'nav-user',
+                    'person_form': person_form,
+                    'address_form': address_form,
+                    'error_msg': "Changes not saved!"
+                }
+                return render(request=request, template_name=self.__template_name, context=context)
             return redirect('user_profile:profile')
 
         context = {
