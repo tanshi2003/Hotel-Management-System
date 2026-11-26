@@ -146,3 +146,23 @@ class AddBookingView(LoginRequiredMixin, View):
             WishList.objects.filter(pk__in=selected_ids, person=person).delete()
 
         return JsonResponse({'msg': 'Your reservation request has been placed!', 'reservationNumber': booking.reservation_number}, status=201)
+
+
+
+class GuestCancelBookingView(LoginRequiredMixin, View):
+    """Guests may cancel only their own booking before check-in."""
+    CANCELLABLE = {'requested', 'pending', 'confirmed'}
+
+    def post(self, request, *args, **kwargs):
+        person = get_object_or_404(Person, email=request.user.email)
+        with transaction.atomic():
+            booking = get_object_or_404(
+                Booking.objects.select_for_update(),
+                reservation_number=kwargs['reservation_number'],
+                person=person,
+            )
+            if booking.booking_status not in self.CANCELLABLE:
+                return JsonResponse({'error': 'This booking can no longer be cancelled.'}, status=409)
+            booking.booking_status = 'canceled'
+            booking.save(update_fields=['booking_status'])
+        return JsonResponse({'reservationNumber': booking.reservation_number, 'status': 'canceled'})
