@@ -131,16 +131,14 @@
             </div>
             <div class="row my-2">
                 <div class="col-12">
-                    <!-- <h1 class="text-lg">Total Cost: 6000 $</h1> -->
-                    <label class="h4 mr-pc" for="">Total Cost ($): </label>
+                    <label class="h4 mr-pc" for="totalCost">Estimated Total ($): </label>
                     <input class="h4 font-weight-bold border-0" id="totalCost" type="number" readonly
                         value="{{room_details.booking_price}}" />
+                    <small id="priceBreakdown" class="d-block text-muted">Select your dates to calculate the stay.</small>
                 </div>
-                <div class="col mt-5">
-                    <button id="add-to-list" type="button" class="btn mr-bgpc text-white px-5">Add to
-                        List</button>
-                    <button type="button" class="btn mr-bgpc text-white px-5">Book Now</button>
-
+                <div class="col mt-4">
+                    <button id="add-to-list" type="button" class="btn mr-bgpc text-white px-5">Add to List</button>
+                    <button id="book-now" type="button" class="btn mr-bgpc text-white px-5">Book Now</button>
                 </div>
             </div>
         </div>
@@ -152,89 +150,76 @@
 
 {% block javascript %}
 <script>
-    const roomPrice = parseFloat("{{room_details.booking_price}}")
+    const roomPrice = Number("{{room_details.booking_price}}");
+    const roomNumber = "{{room_details.room_number}}";
     const checkInElm = document.getElementById("checkIn");
     const checkOutElm = document.getElementById("checkOut");
     const checkButtonElm = document.getElementById("checkButton");
+    const totalCostElm = document.getElementById("totalCost");
+    const priceBreakdownElm = document.getElementById("priceBreakdown");
+    const isCleaningElm = document.getElementById("customCheck1");
+    const isLaundryElm = document.getElementById("customCheck2");
+    const isBreakfastElm = document.getElementById("customCheck3");
+    const addToListBtn = document.getElementById("add-to-list");
+    const bookNowBtn = document.getElementById("book-now");
+    const availabilityUrl = "{% url 'room_availability' %}";
+    const wishlistUrl = "{% url 'add_to_wishlist' %}";
+    const csrfToken = document.cookie.split('; ').find(cookie => cookie.startsWith('csrftoken='))?.split('=')[1] || "";
+    const today = new Date().toISOString().slice(0,10);
+    checkInElm.min = today;
+    checkOutElm.min = today;
 
-    const url = "{% url 'room_availability' %}";
-    console.log('I am here', typeof document.cookie)
-    const csrfToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('csrftoken='))?.split('=')[1] || '';
-    console.log(csrfToken)
-    checkButtonElm.addEventListener('click', async () => {
-        const checkInDate = checkInElm.value;
-        const checkOutDate = checkOutElm.value;
-        const roomNumber = "{{room_details.room_number}}"
-        const data = { checkInDate, checkOutDate, roomNumber }
-
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-
-        const parsedRes = await res.json();
-        if (parsedRes["is_available"]) {
-            alert("The requested room is available.")
-        }
-        else {
-            alert("Sorry, The requested room is not available.")
-        }
-
-        console.log(parsedRes);
-    })
-    let totalCost = 0
-    const isCleaningElm = document.getElementById('customCheck1')
-    const isLaundryElm = document.getElementById('customCheck2')
-    const isBreakfastElm = document.getElementById('customCheck3')
-    const totalCostElm = document.getElementById('totalCost')
-
-    function calculateTotalCost() {
-        totalCost = roomPrice
-        totalCost += isCleaningElm.checked ? 5 : 0
-        totalCost += isLaundryElm.checked ? 5.5 : 0
-        totalCost += isBreakfastElm.checked ? 5 : 0
-
-        totalCostElm.value = totalCost
+    function getNights() {
+        if (!checkInElm.value || !checkOutElm.value) return 0;
+        const start = new Date(checkInElm.value + "T00:00:00");
+        const end = new Date(checkOutElm.value + "T00:00:00");
+        return Math.round((end - start) / 86400000);
     }
-    isCleaningElm.addEventListener('click', calculateTotalCost)
-    isLaundryElm.addEventListener('click', calculateTotalCost)
-    isBreakfastElm.addEventListener('click', calculateTotalCost)
-
-    const addToListBtn = document.getElementById('add-to-list')
-    addToListBtn.addEventListener('click', async () => {
-        const data = {
-            "isCleaning": isCleaningElm.checked,
-            "isLaundry": isLaundryElm.checked,
-            "isBreakfast": isBreakfastElm.checked,
-            "totalCost": parseFloat(totalCostElm.value),
-            "checkInDate": checkInElm.value,
-            "checkOutDate": checkOutElm.value,
-            "roomNumber": "{{room_details.room_number}}"
+    function validDates() {
+        return !!checkInElm.value && !!checkOutElm.value && getNights() > 0;
+    }
+    function calculateTotalCost() {
+        const nights = getNights();
+        const services = (isCleaningElm.checked ? 5 : 0) + (isLaundryElm.checked ? 5.5 : 0) + (isBreakfastElm.checked ? 5 : 0);
+        const cost = (nights > 0 ? roomPrice * nights : roomPrice) + services;
+        totalCostElm.value = cost.toFixed(2);
+        priceBreakdownElm.textContent = nights > 0 ? nights + " night(s) × $" + roomPrice.toFixed(2) + " + $" + services.toFixed(2) + " services" : "Select valid dates to calculate multiple nights. Service fees are per stay.";
+    }
+    checkInElm.addEventListener("change", () => {
+        if (checkInElm.value) {
+            checkOutElm.min = checkInElm.value;
+            if (checkOutElm.value && checkOutElm.value <= checkInElm.value) checkOutElm.value = "";
         }
-        const url2 = "{% url 'add_to_wishlist' %}";
-        const res = await fetch(url2, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        })
+        calculateTotalCost();
+    });
+    checkOutElm.addEventListener("change", calculateTotalCost);
+    [isCleaningElm, isLaundryElm, isBreakfastElm].forEach(elm => elm.addEventListener("change", calculateTotalCost));
 
-        if (res.redirected) {
-            window.location.href = res.url;
-        }
-        else {
-            const json_res = await res.json()
-            alert(json_res.msg)
-        }
+    checkButtonElm.addEventListener("click", async () => {
+        if (!validDates()) { alert("Please choose a check-in and check-out date. Check-out must be after check-in."); return; }
+        try {
+            const res = await fetch(availabilityUrl, {method:"POST",headers:{"X-CSRFToken":csrfToken,"Content-Type":"application/json"},body:JSON.stringify({checkInDate:checkInElm.value,checkOutDate:checkOutElm.value,roomNumber})});
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "Could not check availability.");
+            alert(result.is_available ? "This room is available for your selected dates." : "Sorry, this room is not available for those dates.");
+        } catch (error) { alert(error.message || "Availability check failed. Please try again."); }
+    });
 
-    })
-
-
+    async function addWishlistItem() {
+        if (!validDates()) { alert("Choose valid check-in and check-out dates first."); return false; }
+        const payload = {isCleaning:isCleaningElm.checked,isLaundry:isLaundryElm.checked,isBreakfast:isBreakfastElm.checked,totalCost:Number(totalCostElm.value),checkInDate:checkInElm.value,checkOutDate:checkOutElm.value,roomNumber};
+        try {
+            const res = await fetch(wishlistUrl,{method:"POST",headers:{"X-CSRFToken":csrfToken,"Content-Type":"application/json"},body:JSON.stringify(payload)});
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.msg || "Could not add this room.");
+            alert(data.msg || "Added to your wishlist.");
+            return true;
+        } catch(error) { alert(error.message || "Request failed. Please try again."); return false; }
+    }
+    addToListBtn.addEventListener("click", addWishlistItem);
+    bookNowBtn.addEventListener("click", async () => {
+        if (await addWishlistItem()) window.location.href = "{% url 'wishlist' %}";
+    });
+    calculateTotalCost();
 </script>
 {% endblock javascript %}
