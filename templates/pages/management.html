@@ -1,10 +1,147 @@
 {% extends 'common/base.html' %}
 
 {% block content %}
-<main>
-    <div class="container">
-        <h1>Management</h1>
-        
+<style>
+.management-shell{padding:24px 0 56px}
+.management-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.management-heading h1{font-weight:800;margin:0}
+.management-subtitle{color:#6c757d;margin:6px 0 0}
+.management-stat{background:#fff;border:1px solid #e9ecef;border-radius:14px;padding:18px;height:100%;box-shadow:0 4px 14px rgba(15,23,42,.04)}
+.management-stat small{display:block;color:#6c757d;margin-bottom:6px}
+.management-stat strong{font-size:1.65rem}
+.management-filters{background:#fff;border:1px solid #e9ecef;border-radius:14px;padding:16px;margin:22px 0}
+.management-table-wrap{background:#fff;border:1px solid #e9ecef;border-radius:14px;overflow-x:auto}
+.management-table{min-width:980px;margin:0}
+.management-table thead th{border-top:0;background:#f8f9fa;color:#5b6470;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+.management-table td,.management-table th{vertical-align:middle}
+.status-pill{display:inline-block;padding:5px 10px;border-radius:99px;font-size:.76rem;font-weight:700;text-transform:capitalize;background:#f1f3f5;color:#495057}
+.status-requested{background:#fff3cd;color:#856404}.status-pending{background:#e2e3e5;color:#383d41}.status-confirmed{background:#d4edda;color:#155724}.status-checked-in{background:#d1ecf1;color:#0c5460}.status-checked-out{background:#d6d8db;color:#343a40}.status-canceled{background:#f8d7da;color:#721c24}.status-abandoned{background:#e2d9f3;color:#4a235a}
+.booking-detail{background:#f8f9fa;border-radius:10px;padding:14px;margin-top:8px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.detail-item small{display:block;color:#6c757d}.detail-item strong{word-break:break-word}
+.management-empty{padding:36px;text-align:center;color:#6c757d}
+.management-action select{max-width:160px}
+@media(max-width:576px){.management-shell{padding-top:12px}.management-heading h1{font-size:1.8rem}}
+</style>
+<main class="management-shell">
+  <div class="container">
+    <div class="management-heading">
+      <div><h1>Reservations desk</h1><p class="management-subtitle">Search, review and move bookings through their lifecycle.</p></div>
+      <span class="badge badge-light p-2">{% if is_privileged %}Manager / Admin{% else %}Reception{% endif %} access</span>
     </div>
+    <div class="row">
+      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Total reservations</small><strong>{{ total_bookings }}</strong></div></div>
+      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Requested</small><strong>{{ status_counts.requested|default:0 }}</strong></div></div>
+      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>Confirmed</small><strong>{{ status_counts.confirmed|default:0 }}</strong></div></div>
+      <div class="col-md-3 col-6 mb-3"><div class="management-stat"><small>In house</small><strong>{{ status_counts.checked-in|default:0 }}</strong></div></div>
+    </div>
+    <div class="management-filters">
+      <div class="form-row align-items-end">
+        <div class="form-group col-lg-4"><label for="reservationSearch">Search reservations</label><input id="reservationSearch" class="form-control" type="search" placeholder="Reservation ID, guest, email, room..."></div>
+        <div class="form-group col-md-3 col-lg-2"><label for="statusFilter">Status</label><select id="statusFilter" class="form-control"><option value="">All statuses</option>{% for key,label in status_labels.items %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+        <div class="form-group col-md-3 col-lg-2"><label for="dateFrom">Check-in from</label><input id="dateFrom" class="form-control" type="date"></div>
+        <div class="form-group col-md-3 col-lg-2"><label for="dateTo">Check-out by</label><input id="dateTo" class="form-control" type="date"></div>
+        <div class="form-group col-lg-2"><button id="clearFilters" type="button" class="btn btn-outline-secondary btn-block">Clear filters</button></div>
+      </div>
+      <small id="resultsCount" class="text-muted"></small>
+    </div>
+    <div class="management-table-wrap">
+      <table class="table management-table">
+        <thead><tr><th>Reservation</th><th>Guest</th><th>Rooms / stay</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="bookingRows">
+          {% for booking in bookings %}
+          <tr class="booking-row" data-reservation="{{ booking.reservation_number|lower }}" data-guest="{{ booking.person.name|default:'Guest'|lower }}" data-email="{{ booking.person.email|default:''|lower }}" data-room="{% for room in booking.rooms.all %}{{ room.room_number|lower }} {% endfor %}" data-status="{{ booking.booking_status }}" data-checkin="{% for history in booking.bookinghistory_set.all %}{% if forloop.first %}{{ history.check_in|date:'Y-m-d' }}{% endif %}{% endfor %}" data-checkout="{% for history in booking.bookinghistory_set.all %}{% if forloop.first %}{{ history.check_out|date:'Y-m-d' }}{% endif %}{% endfor %}">
+            <td><strong>{{ booking.reservation_number }}</strong><div><small class="text-muted">{{ booking.bookinghistory_set.count }} stay item(s)</small></div></td>
+            <td>{{ booking.person.name|default:"Guest record unavailable" }}<div><small class="text-muted">{{ booking.person.email|default:"No email" }}</small></div></td>
+            <td>{% for room in booking.rooms.all %}<span class="badge badge-light mr-1">Room {{ room.room_number }}</span>{% empty %}<span class="text-muted">No room linked</span>{% endfor %}<div><small class="text-muted">{% for history in booking.bookinghistory_set.all %}{% if forloop.first %}{{ history.check_in|date:"M d, Y" }} to {{ history.check_out|date:"M d, Y" }}{% endif %}{% endfor %}</small></div></td>
+            <td><span class="status-pill status-{{ booking.booking_status|slugify }}" data-status-label>{{ booking.get_booking_status_display }}</span></td>
+            <td class="management-action"><button type="button" class="btn btn-sm btn-outline-primary detail-toggle" data-target="details-{{ forloop.counter }}">Details</button>
+              <div class="mt-2"><select class="form-control form-control-sm status-select" aria-label="Update booking status" data-reservation="{{ booking.reservation_number }}" data-current="{{ booking.booking_status }}"><option value="">Update status...</option></select></div>
+            </td>
+          </tr>
+          <tr class="detail-row" id="details-{{ forloop.counter }}" style="display:none"><td colspan="5"><div class="booking-detail"><div class="detail-grid">
+            <div class="detail-item"><small>Guest name</small><strong>{{ booking.person.name|default:"Unavailable" }}</strong></div>
+            <div class="detail-item"><small>Guest email</small><strong>{{ booking.person.email|default:"Unavailable" }}</strong></div>
+            <div class="detail-item"><small>Guest phone</small><strong>{{ booking.person.phone|default:"Unavailable" }}</strong></div>
+            <div class="detail-item"><small>Booking status</small><strong data-detail-status>{{ booking.get_booking_status_display }}</strong></div>
+            </div><hr><strong>Room & stay details</strong>
+            {% for history in booking.bookinghistory_set.all %}
+            <div class="border rounded p-3 mt-2 bg-white"><div class="detail-grid">
+              <div class="detail-item"><small>Room</small><strong>{% if history.room %}{{ history.room.room_number }} · {{ history.room.get_style_display }}{% else %}Room removed{% endif %}</strong></div>
+              <div class="detail-item"><small>Check-in</small><strong>{{ history.check_in|date:"M d, Y"|default:"Not set" }}</strong></div>
+              <div class="detail-item"><small>Check-out</small><strong>{{ history.check_out|date:"M d, Y"|default:"Not set" }}</strong></div>
+              <div class="detail-item"><small>Total</small><strong>₹{{ history.total_price|floatformat:2 }}</strong></div>
+              <div class="detail-item"><small>Extras</small><strong>{% if history.room_cleaning %}Cleaning · {% endif %}{% if history.laundry %}Laundry · {% endif %}{% if history.breakfast %}Breakfast{% endif %}{% if not history.room_cleaning and not history.laundry and not history.breakfast %}None{% endif %}</strong></div>
+            </div></div>{% empty %}<p class="text-muted mb-0">No stay details are linked to this booking.</p>{% endfor %}
+            </div></td></tr>
+          {% empty %}
+          <tr><td colspan="5" class="management-empty">No reservations have been created yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div id="filteredEmpty" class="management-empty" style="display:none">No reservations match these filters.</div>
+    </div>
+  </div>
 </main>
-{% endblock content%}
+{% endblock content %}
+
+{% block javascript %}
+<script>
+(function(){
+  const privileged = {{ is_privileged|yesno:"true,false" }};
+  const transitions = {
+    reception: {requested:['pending','confirmed','canceled'],pending:['confirmed','canceled'],confirmed:['checked-in','canceled'],'checked-in':['checked-out']},
+    privileged: {requested:['pending','confirmed','canceled','abandoned'],pending:['confirmed','canceled','abandoned'],confirmed:['checked-in','canceled','abandoned'],'checked-in':['checked-out']}
+  };
+  const labels = {requested:'Requested',pending:'Pending',confirmed:'Confirmed','checked-in':'Checked-in','checked-out':'Checked-out',canceled:'Canceled',abandoned:'Abandoned'};
+  const rows = [...document.querySelectorAll('.booking-row')];
+  const search = document.getElementById('reservationSearch'), status = document.getElementById('statusFilter'), from = document.getElementById('dateFrom'), to = document.getElementById('dateTo');
+  function fillStatusSelect(select, current){
+    const allowed = (privileged ? transitions.privileged : transitions.reception)[current] || [];
+    select.innerHTML = '<option value="">Update status...</option>' + allowed.map(s=>'<option value="'+s+'">'+labels[s]+'</option>').join('');
+    select.disabled = allowed.length === 0;
+  }
+  document.querySelectorAll('.status-select').forEach(s=>fillStatusSelect(s,s.dataset.current));
+  function filterRows(){
+    const q=search.value.trim().toLowerCase(), st=status.value, start=from.value, end=to.value; let visible=0;
+    rows.forEach(row=>{
+      const matchesText=(!q || [row.dataset.reservation,row.dataset.guest,row.dataset.email,row.dataset.room].some(v=>v.includes(q)));
+      const matchesStatus=!st || row.dataset.status===st;
+      const matchesDates=(!start || !row.dataset.checkin || row.dataset.checkin>=start) && (!end || !row.dataset.checkout || row.dataset.checkout<=end);
+      const show=matchesText&&matchesStatus&&matchesDates;
+      row.style.display=show?'':'none';
+      const details=row.nextElementSibling;
+      if(!show) details.style.display='none';
+      if(show) visible++;
+    });
+    document.getElementById('resultsCount').textContent=visible+' reservation'+(visible===1?'':'s')+' shown';
+    document.getElementById('filteredEmpty').style.display=visible?'none':'block';
+  }
+  [search,status,from,to].forEach(el=>el.addEventListener('input',filterRows));
+  document.getElementById('clearFilters').addEventListener('click',()=>{search.value='';status.value='';from.value='';to.value='';filterRows();});
+  document.querySelectorAll('.detail-toggle').forEach(button=>button.addEventListener('click',()=>{
+    const target=document.getElementById(button.dataset.target);
+    target.style.display=target.style.display==='none'?'':'none';
+    button.textContent=target.style.display==='none'?'Details':'Hide details';
+  }));
+  function getCookie(name){return document.cookie.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'='))?.split('=').slice(1).join('=')||'';}
+  document.querySelectorAll('.status-select').forEach(select=>select.addEventListener('change',async()=>{
+    const target=select.value;if(!target)return;
+    const previous=select.dataset.current;select.disabled=true;
+    try{
+      const response=await fetch('/hms/management/booking/'+encodeURIComponent(select.dataset.reservation)+'/status/',{
+        method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':decodeURIComponent(getCookie('csrftoken'))},body:JSON.stringify({status:target})
+      });
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'Status update failed.');
+      const row=select.closest('.booking-row');row.dataset.status=data.status;select.dataset.current=data.status;
+      row.querySelector('[data-status-label]').textContent=labels[data.status];row.querySelector('[data-status-label]').className='status-pill status-'+data.status;
+      row.nextElementSibling.querySelector('[data-detail-status]').textContent=labels[data.status];
+      fillStatusSelect(select,data.status);select.value='';
+      filterRows();
+    }catch(error){alert(error.message);fillStatusSelect(select,previous);select.value='';}
+  }));
+  filterRows();
+})();
+</script>
+{% endblock javascript %}
