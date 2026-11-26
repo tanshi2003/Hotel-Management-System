@@ -73,66 +73,34 @@
 
 {% block javascript %}
 <script>
-    const csrfToken = document.cookie.split('=')[1]
+    const csrfToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('csrftoken='))?.split('=')[1] || '';
     const totalAmountElm = document.getElementById('total-amount');
-    const checkBoxes = document.getElementsByTagName('input');
     const totalAmountDAElm = document.getElementById('total-amount-ds');
     const bookNowElm = document.getElementById('book-now');
-    let totalAmount = 0
-    for (const element of checkBoxes) {
-        if (element.type == 'checkbox') {
-            const id = parseInt(element.value)
-            element.addEventListener('change', (e) => {
-                const itemTotalPrice = parseFloat(document.getElementById(`item-total-price-${id}`).innerText)
-                if (e.target.checked) {
-                    totalAmount += itemTotalPrice;
-                } else {
-                    totalAmount -= itemTotalPrice;
-                }
-                totalAmountElm.innerText = totalAmount;
-                totalAmountDAElm.innerText = totalAmount;
-
-            })
-        }
-    }
-    totalAmountElm.innerText = totalAmount;
-    totalAmountDAElm.innerText = totalAmount;
-
+    const checkBoxes = document.querySelectorAll('input[type="checkbox"]');
+    const selectedPrice = (checkbox) => Number(document.getElementById(`item-total-price-${checkbox.value}`)?.textContent || 0);
+    const updateTotals = () => {
+        const total = Array.from(checkBoxes).filter((box) => box.checked).reduce((sum, box) => sum + selectedPrice(box), 0);
+        totalAmountElm.textContent = total.toFixed(2);
+        totalAmountDAElm.textContent = total.toFixed(2);
+    };
+    checkBoxes.forEach((checkbox) => checkbox.addEventListener('change', updateTotals));
+    updateTotals();
     const bookNow = async () => {
-        let data = {
-            "itemId": []
-        }
-        for (const element of checkBoxes) {
-            if (element.type == 'checkbox') {
-                const id = parseInt(element.value)
-                data.itemId.push(id)
-            }
-        }
-        if (data.itemId.length == 0) {
-            alert("No item seleted!!")
-            return;
-        }
-        const url = `http://127.0.0.1:8000/hms/room-booking/book-now/`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-
-        })
-        const decoded_res = await res.json()
-        if (decoded_res.msg) {
-            alert(decoded_res.msg)
-            location.reload()
-        }
-        else {
-            alert("Order placing failed!!")
-        }
-    }
-
+        const selectedIds = Array.from(checkBoxes).filter((checkbox) => checkbox.checked).map((checkbox) => Number(checkbox.value));
+        if (!selectedIds.length) { alert('Please select at least one room to proceed.'); return; }
+        try {
+            const response = await fetch("{% url 'book_now' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId: selectedIds })
+            });
+            const result = await response.json();
+            if (!response.ok) { alert(result.msg || 'Booking could not be placed.'); return; }
+            alert(result.msg || 'Reservation request placed!');
+            window.location.reload();
+        } catch (error) { alert('Unable to reach the booking service. Please try again.'); }
+    };
     bookNowElm.addEventListener('click', bookNow);
-
 </script>
 {% endblock javascript %}
