@@ -42,6 +42,9 @@
                <li id="nav-about" class="nav-item">
                   <a class="nav-link" href="{% url 'about' %}">About</a>
                </li>
+               {% if user.is_receptionist or user.is_manager or user.is_admin %}
+               <li id="nav-management" class="nav-item"><a class="nav-link" href="{% url 'management' %}">Management</a></li>
+               {% endif %}
                <li id="nav-contact" class="nav-item">
                   <a class="nav-link" href="{% url 'contact' %}">Contact</a>
                </li>
