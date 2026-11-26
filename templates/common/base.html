@@ -62,7 +62,10 @@
                      {% if user.is_receptionist %}
                      <a class="dropdown-item" href="{% url 'management' %}">Management</a>
                      {% endif %}
-                     <a class="dropdown-item" href="{% url 'user_profile:logout' %}">Sign out</a>
+                     <form action="{% url 'user_profile:logout' %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">Sign out</button>
+                     </form>
                   </div>
                </li>
                {% else %}
