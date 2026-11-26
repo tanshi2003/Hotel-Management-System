@@ -32,3 +32,28 @@ class RegistrationIntegrityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Person.objects.filter(email='existing@example.com').count(), 1)
         self.assertEqual(Account.objects.filter(email='existing@example.com').count(), 1)
+
+class LoginNormalizationTests(TestCase):
+    def setUp(self):
+        self.person = Person.objects.create(
+            name='Login Guest', email='login-guest@example.com',
+            phone='1234567890', account_type='guest',
+        )
+        Account.objects.create_user(
+            email='login-guest@example.com', password='test-login-password',
+            is_guest=True, person=self.person,
+        )
+
+    def test_login_accepts_mixed_case_email(self):
+        response = self.client.post('/hms/user/login/', {
+            'email': 'LOGIN-GUEST@EXAMPLE.COM',
+            'password': 'test-login-password',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/')
+
+    def test_user_manager_normalizes_email(self):
+        account = Account.objects.create_user(
+            email='  MixedCase@Example.com  ', password='test-password', is_guest=True,
+        )
+        self.assertEqual(account.email, 'mixedcase@example.com')
