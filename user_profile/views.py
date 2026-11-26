@@ -3,6 +3,7 @@ from django.views import View
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction, IntegrityError
 
 from user_profile.models import Person, Account, Address
 from user_profile.forms import PersonForm, AccountForm, AddressForm, PersonForm2
@@ -36,23 +37,28 @@ class RegisterView(View):
         person_form = PersonForm(request.POST)
         account_form = AccountForm(request.POST)
         if person_form.is_valid() and account_form.is_valid():
-            print('form is valid')
             person = person_form.save(commit=False)
             person.account_type = 'guest'
-            person.save()
-            # self.person_role[person.account_type] = True
             account = Account(
                 email=person.email,
                 is_guest=True,
-                # is_admin = self.person_role['admin'],
-                # is_manager = self.person_role['manager'],
-                # is_receptionist = self.person_role['receptionist'],
-                # is_guest = self.person_role['guest'],
-                # is_staff = self.person_role['staff'],
                 person=person
             )
             account.set_password(account_form.cleaned_data.get("password"))
-            account.save()
+            try:
+                # Keep the Person and Account records consistent if either save fails.
+                with transaction.atomic():
+                    person.save()
+                    account.save()
+            except IntegrityError:
+                person_form.add_error('email', 'An account with this email already exists.')
+                context = {
+                    'title': 'User Registration',
+                    'active_nav_item': 'nav-signup',
+                    'person_form': person_form,
+                    'account_form': account_form
+                }
+                return render(request, self.template_name, context=context)
             return redirect(self.__homepage_url_name)
         else:
             print("Form not valid")
