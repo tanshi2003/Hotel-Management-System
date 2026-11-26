@@ -49,6 +49,7 @@ class ManagementView(ManagementAccessMixin, View):
             'active_nav_item': 'nav-management',
             'bookings': bookings,
             'status_counts': counts,
+            'in_house_count': counts.get('checked-in', 0),
             'total_bookings': bookings.count(),
             'is_privileged': request.user.is_admin or request.user.is_manager,
             'status_labels': dict(Booking.BOOKING_STATUS),
